@@ -197,9 +197,9 @@ The limiter stores timestamps of accepted requests per user and removes timestam
 
 ### Concurrency Safety
 
-All reads and writes to the in-memory request window and stats dictionaries happen inside a `threading.RLock`.
+The default Redis backend performs the complete rate-limit check and update inside a Lua script. Redis executes Lua scripts atomically, so parallel requests and multiple app instances cannot race past the 5-request limit.
 
-This matters because ASGI servers can process multiple requests concurrently. Without the lock, two parallel requests could both observe that a user has remaining capacity and both be accepted, causing the limiter to exceed 5 requests.
+The in-memory fallback also protects all reads and writes to request windows and stats dictionaries with a `threading.RLock`. This matters because ASGI servers can process multiple requests concurrently. Without an atomic operation or lock, two parallel requests could both observe that a user has remaining capacity and both be accepted, causing the limiter to exceed 5 requests.
 
 ### Accurate Stats
 
