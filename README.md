@@ -2,6 +2,13 @@
 
 Production-style FastAPI service for the Source Asia assignment.
 
+## Live Demo
+
+- GitHub repository: `https://github.com/AndrewJerryV/rate-limited-api`
+- Hugging Face Space: `https://huggingface.co/spaces/AndrewJerryV/rate-limited-api`
+- API docs: `https://AndrewJerryV-rate-limited-api.hf.space/docs`
+- Health check: `https://AndrewJerryV-rate-limited-api.hf.space/health`
+
 It exposes:
 
 - `POST /request` - accepts `{ "user_id": "...", "payload": ... }`
@@ -18,7 +25,7 @@ The service enforces a per-user rate limit of **5 accepted requests per rolling 
 - `Retry-After` response header for rate-limited clients.
 - Retrying client script in `scripts/retry_client.py`.
 - Dockerfile and Docker Compose setup.
-- Azure Container Apps deployment steps.
+- Hugging Face Spaces deployment.
 
 ## Tech Stack
 
@@ -268,7 +275,19 @@ Render Key Value is Valkey-based but Redis-compatible, so the existing `redis` P
 
 ### Alternative: Hugging Face Spaces
 
-Hugging Face Spaces is another no-credit-card-friendly option for a Docker API demo. It is good for showing `/docs`, but it does not include a free managed Redis service. Because this project defaults to Redis, you must provide an external Redis-compatible URL in Space settings.
+Hugging Face Spaces is used for the live demo:
+
+```text
+https://huggingface.co/spaces/AndrewJerryV/rate-limited-api
+```
+
+API docs:
+
+```text
+https://AndrewJerryV-rate-limited-api.hf.space/docs
+```
+
+Hugging Face Spaces is a no-credit-card-friendly option for a Docker API demo. It is good for showing `/docs`, but it does not include a free managed Redis service. Because this project defaults to Redis, you must provide an external Redis-compatible URL in Space settings.
 
 Steps:
 
@@ -288,7 +307,7 @@ Steps:
 Open:
 
 ```text
-https://<your-username>-<space-name>.hf.space/docs
+https://AndrewJerryV-rate-limited-api.hf.space/docs
 ```
 
 ### Not Recommended For This Assignment
