@@ -207,9 +207,15 @@ Important production limitations:
 - Add a proper background queue for clients that prefer delayed processing over immediate rejection.
 - Add CI with linting, type checking, and automated tests.
 
-## Deploy On Azure Container Apps
+## Deploy Without A Credit Card
 
-These are the outside steps to deploy after pushing this folder to GitHub.
+Azure commonly asks for a card, so use one of these instead.
+
+### Recommended: Render Free Web Service
+
+Render has a free web service tier for Python apps. It also has a free Key Value service that is Redis-compatible, so this is the best no-card option for showing both the API and the Redis bonus.
+
+Limitations: free services can spin down when idle, and usage limits can change. This is fine for an assignment demo, not production.
 
 ### 1. Create a GitHub repository
 
@@ -222,105 +228,72 @@ git remote add origin https://github.com/<your-username>/<repo-name>.git
 git push -u origin main
 ```
 
-### 2. Install and configure Azure CLI
+### 2. Deploy the API on Render
 
-```bash
-az login
-az extension add --name containerapp --upgrade
-az provider register --namespace Microsoft.App
-az provider register --namespace Microsoft.OperationalInsights
-```
+1. Go to `https://render.com`.
+2. Sign up with GitHub.
+3. Click `New` -> `Web Service`.
+4. Connect your GitHub repository.
+5. Use these settings:
+   - Runtime: `Docker`
+   - Instance type: `Free`
+   - Branch: `main`
+   - Root directory: leave empty
+6. Add environment variables:
+   - `RATE_LIMIT_BACKEND=memory`
+   - `RATE_LIMIT_MAX_REQUESTS=5`
+   - `RATE_LIMIT_WINDOW_SECONDS=60`
+7. Click `Create Web Service`.
 
-### 3. Deploy the API without Redis
-
-This is the simplest cloud deployment and still satisfies the main assignment.
-
-```bash
-az containerapp up ^
-  --name source-asia-rate-api ^
-  --resource-group source-asia-rate-rg ^
-  --location eastus ^
-  --source . ^
-  --ingress external ^
-  --target-port 8000 ^
-  --env-vars RATE_LIMIT_BACKEND=memory RATE_LIMIT_MAX_REQUESTS=5 RATE_LIMIT_WINDOW_SECONDS=60 ^
-  --query properties.configuration.ingress.fqdn
-```
-
-Open the returned URL:
+After deploy, open:
 
 ```text
-https://<returned-fqdn>/docs
+https://<your-render-service>.onrender.com/docs
 ```
 
-### 4. Deploy with Azure Redis
+### 3. Add Redis-Compatible Storage On Render
 
-For the full bonus deployment, create a managed Redis instance and pass its connection URL as a Container Apps secret.
+1. In Render, click `New` -> `Key Value`.
+2. Choose the `Free` instance type.
+3. Put it in the same region as the web service.
+4. After it is created, copy the internal Redis URL.
+5. Open your web service -> `Environment`.
+6. Set:
+   - `RATE_LIMIT_BACKEND=redis`
+   - `REDIS_URL=<internal Redis URL from Render Key Value>`
+7. Save changes and redeploy.
 
-```bash
-az group create --name source-asia-rate-rg --location eastus
-az redis create ^
-  --name <unique-redis-name> ^
-  --resource-group source-asia-rate-rg ^
-  --location eastus ^
-  --sku Basic ^
-  --vm-size c0
-```
+Render Key Value is Valkey-based but Redis-compatible, so the existing `redis` Python client works.
 
-Get Redis connection details:
+### Alternative: Hugging Face Spaces
 
-```bash
-az redis show ^
-  --name <unique-redis-name> ^
-  --resource-group source-asia-rate-rg ^
-  --query hostName ^
-  --output tsv
+Hugging Face Spaces is another no-credit-card-friendly option for a Docker API demo. It is good for showing `/docs`, but it does not include a free managed Redis service, so use the in-memory backend there.
 
-az redis list-keys ^
-  --name <unique-redis-name> ^
-  --resource-group source-asia-rate-rg ^
-  --query primaryKey ^
-  --output tsv
-```
+Steps:
 
-Create the Redis URL:
+1. Go to `https://huggingface.co/spaces`.
+2. Click `Create new Space`.
+3. Choose:
+   - SDK: `Docker`
+   - Visibility: Public
+4. Push this repository to the Space repository.
+5. Replace the Space README front matter with the contents of `HUGGINGFACE_SPACE_README.md`.
+6. Keep these environment variables in Space settings:
+   - `RATE_LIMIT_BACKEND=memory`
+   - `RATE_LIMIT_MAX_REQUESTS=5`
+   - `RATE_LIMIT_WINDOW_SECONDS=60`
+
+Open:
 
 ```text
-rediss://:<primary-key>@<redis-hostname>:6380/0
+https://<your-username>-<space-name>.hf.space/docs
 ```
 
-Deploy the app:
+### Not Recommended For This Assignment
 
-```bash
-az containerapp up ^
-  --name source-asia-rate-api ^
-  --resource-group source-asia-rate-rg ^
-  --location eastus ^
-  --source . ^
-  --ingress external ^
-  --target-port 8000
-```
-
-Add the Redis secret and enable the Redis backend:
-
-```bash
-az containerapp secret set ^
-  --name source-asia-rate-api ^
-  --resource-group source-asia-rate-rg ^
-  --secrets redis-url="rediss://:<primary-key>@<redis-hostname>:6380/0"
-
-az containerapp update ^
-  --name source-asia-rate-api ^
-  --resource-group source-asia-rate-rg ^
-  --set-env-vars RATE_LIMIT_BACKEND=redis REDIS_URL=secretref:redis-url RATE_LIMIT_MAX_REQUESTS=5 RATE_LIMIT_WINDOW_SECONDS=60
-```
-
-Check the deployed API:
-
-```bash
-curl https://<returned-fqdn>/health
-curl https://<returned-fqdn>/stats
-```
+- Koyeb: currently documents card requirements in some flows, so avoid it if you have no card.
+- Azure: usually asks for a card.
+- Fly.io: commonly requires a card.
 
 ## Optional Docker Run
 
