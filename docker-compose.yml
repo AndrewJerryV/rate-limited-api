@@ -1,0 +1,17 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  api:
+    build: .
+    environment:
+      RATE_LIMIT_BACKEND: redis
+      REDIS_URL: redis://redis:6379/0
+      RATE_LIMIT_MAX_REQUESTS: "5"
+      RATE_LIMIT_WINDOW_SECONDS: "60"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
