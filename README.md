@@ -6,6 +6,7 @@ Production-style FastAPI service for the Source Asia assignment.
 
 - GitHub repository: `https://github.com/AndrewJerryV/rate-limited-api`
 - Hugging Face Space: `https://huggingface.co/spaces/AndrewJerryV/rate-limited-api`
+- Live API base URL: `https://AndrewJerryV-rate-limited-api.hf.space`
 - API docs: `https://AndrewJerryV-rate-limited-api.hf.space/docs`
 - Health check: `https://AndrewJerryV-rate-limited-api.hf.space/health`
 
@@ -36,7 +37,7 @@ The service enforces a per-user rate limit of **5 accepted requests per rolling 
 - Pytest
 - HTTPX
 
-## Run Locally
+## Steps To Run The Project
 
 ```bash
 python -m venv .venv
@@ -95,12 +96,50 @@ python -m uvicorn app.main:app --reload
 
 ## Example Requests
 
-Accepted request:
+Use the local base URL after running the project:
+
+```text
+http://127.0.0.1:8000
+```
+
+Or use the deployed Hugging Face Space base URL:
+
+```text
+https://AndrewJerryV-rate-limited-api.hf.space
+```
+
+Hugging Face Space project page:
+
+```text
+https://huggingface.co/spaces/AndrewJerryV/rate-limited-api
+```
+
+Accepted request against the live Hugging Face deployment:
+
+```bash
+curl -X POST https://AndrewJerryV-rate-limited-api.hf.space/request \
+  -H "Content-Type: application/json" \
+  -d "{\"user_id\":\"user-123\",\"payload\":{\"message\":\"hello from hugging face\"}}"
+```
+
+Accepted request against local development:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/request ^
   -H "Content-Type: application/json" ^
   -d "{\"user_id\":\"user-123\",\"payload\":{\"message\":\"hello\"}}"
+```
+
+Stats from the live Hugging Face deployment:
+
+```bash
+curl https://AndrewJerryV-rate-limited-api.hf.space/stats
+```
+
+Health check from the live Hugging Face deployment:
+
+```bash
+curl https://AndrewJerryV-rate-limited-api.hf.space/health
 ```
 
 Rate limit exceeded response:
@@ -117,7 +156,7 @@ Rate limit exceeded response:
 }
 ```
 
-Stats:
+Stats from local development:
 
 ```bash
 curl http://127.0.0.1:8000/stats
