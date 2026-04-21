@@ -1,3 +1,7 @@
+import os
+
+os.environ["RATE_LIMIT_BACKEND"] = "memory"
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 

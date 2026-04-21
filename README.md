@@ -14,7 +14,7 @@ The service enforces a per-user rate limit of **5 accepted requests per rolling 
 ## Bonus Features Included
 
 - Redis-backed rate limiter using an atomic Lua script.
-- In-memory fallback for simple local runs.
+- In-memory fallback for tests or simple single-process runs.
 - `Retry-After` response header for rate-limited clients.
 - Retrying client script in `scripts/retry_client.py`.
 - Dockerfile and Docker Compose setup.
@@ -25,7 +25,7 @@ The service enforces a per-user rate limit of **5 accepted requests per rolling 
 - Python 3.11+
 - FastAPI
 - Uvicorn
-- Redis optional
+- Redis default backend
 - Pytest
 - HTTPX
 
@@ -35,6 +35,12 @@ The service enforces a per-user rate limit of **5 accepted requests per rolling 
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements-dev.txt
+docker run --rm -p 6379:6379 redis:7-alpine
+```
+
+In another terminal:
+
+```bash
 uvicorn app.main:app --reload
 ```
 
@@ -52,7 +58,7 @@ http://127.0.0.1:8000/docs
 
 ## Run With Redis Locally
 
-Redis is the production-considerate bonus backend. It keeps rate limits accurate across multiple app processes and multiple deployed instances.
+Redis is the default backend. It keeps rate limits accurate across multiple app processes and multiple deployed instances.
 
 Fastest option:
 
@@ -69,7 +75,6 @@ docker run --rm -p 6379:6379 redis:7-alpine
 In another terminal:
 
 ```bash
-set RATE_LIMIT_BACKEND=redis
 set REDIS_URL=redis://localhost:6379/0
 uvicorn app.main:app --reload
 ```
@@ -77,7 +82,6 @@ uvicorn app.main:app --reload
 PowerShell version:
 
 ```powershell
-$env:RATE_LIMIT_BACKEND="redis"
 $env:REDIS_URL="redis://localhost:6379/0"
 python -m uvicorn app.main:app --reload
 ```
@@ -188,16 +192,13 @@ The rate-limit check runs inside a Redis Lua script. Redis executes that script 
 
 ## Limitations
 
-The default implementation is intentionally in-memory because the assignment says a database is not required. The Redis backend is included for the bonus requirement.
+The default implementation uses Redis because the bonus requirement asks for Redis or a database. An in-memory backend is still available for tests or simple single-process demos by setting `RATE_LIMIT_BACKEND=memory`.
 
 Important production limitations:
 
-- Data resets when the process restarts.
-- In-memory state is not shared across multiple app instances.
-- Running Uvicorn/Gunicorn with multiple worker processes would create one limiter per process, so the global per-user limit would not be accurate.
 - There is no authentication, so `user_id` is trusted input.
-- Old inactive users are kept in memory until the process restarts.
 - Redis stats currently expire after 7 days to avoid unbounded growth.
+- If `RATE_LIMIT_BACKEND=memory` is used, data resets on restart and is not shared across workers or servers.
 
 ## What I Would Improve With More Time
 
@@ -267,7 +268,7 @@ Render Key Value is Valkey-based but Redis-compatible, so the existing `redis` P
 
 ### Alternative: Hugging Face Spaces
 
-Hugging Face Spaces is another no-credit-card-friendly option for a Docker API demo. It is good for showing `/docs`, but it does not include a free managed Redis service, so use the in-memory backend there.
+Hugging Face Spaces is another no-credit-card-friendly option for a Docker API demo. It is good for showing `/docs`, but it does not include a free managed Redis service. Because this project defaults to Redis, you must provide an external Redis-compatible URL in Space settings.
 
 Steps:
 
@@ -279,7 +280,8 @@ Steps:
 4. Push this repository to the Space repository.
 5. Replace the Space README front matter with the contents of `HUGGINGFACE_SPACE_README.md`.
 6. Keep these environment variables in Space settings:
-   - `RATE_LIMIT_BACKEND=memory`
+   - `RATE_LIMIT_BACKEND=redis`
+   - `REDIS_URL=<external Redis-compatible URL>`
    - `RATE_LIMIT_MAX_REQUESTS=5`
    - `RATE_LIMIT_WINDOW_SECONDS=60`
 

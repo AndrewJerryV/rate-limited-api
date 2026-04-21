@@ -17,3 +17,10 @@ FastAPI assignment service with:
 - `GET /docs`
 
 Open `/docs` to test the API interactively.
+
+Runtime variables required:
+
+- `RATE_LIMIT_BACKEND=redis`
+- `REDIS_URL=<external Redis-compatible URL>`
+- `RATE_LIMIT_MAX_REQUESTS=5`
+- `RATE_LIMIT_WINDOW_SECONDS=60`
